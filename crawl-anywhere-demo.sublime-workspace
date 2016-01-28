@@ -1,0 +1,647 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"C",
+				"CRON_SCRIPT"
+			],
+			[
+				"de",
+				"delta-import"
+			],
+			[
+				"add",
+				"add-unknown-fields-to-the-schema"
+			],
+			[
+				"zook",
+				"zookeeper"
+			],
+			[
+				"H",
+				"HEAPSIZE"
+			],
+			[
+				"S",
+				"SERVER_ID"
+			],
+			[
+				"SE",
+				"SERVERS_TEMPLATE"
+			],
+			[
+				"zoo",
+				"ZOOKEEPER_LINK"
+			],
+			[
+				"ZO",
+				"ZOOKEEPER_LINK"
+			],
+			[
+				"ma",
+				"manyShapes"
+			],
+			[
+				"tr",
+				"triangle"
+			],
+			[
+				"col",
+				"color3"
+			],
+			[
+				"color",
+				"color1"
+			],
+			[
+				"colo",
+				"color2"
+			],
+			[
+				"co",
+				"color2"
+			],
+			[
+				"inst",
+				"install"
+			],
+			[
+				"U",
+				"UTF-8"
+			],
+			[
+				"pos",
+				"position"
+			],
+			[
+				"coun",
+				"counter"
+			],
+			[
+				"padd",
+				"paddingNum"
+			],
+			[
+				"pad",
+				"padding"
+			],
+			[
+				"up",
+				"upper"
+			],
+			[
+				"cu",
+				"currentChar"
+			],
+			[
+				"com",
+				"commonBigramsOrder"
+			],
+			[
+				"str",
+				"strxor"
+			],
+			[
+				"chun",
+				"chunk_size"
+			],
+			[
+				"down",
+				"downloaded"
+			],
+			[
+				"ch",
+				"chunk"
+			],
+			[
+				"app",
+				"append"
+			],
+			[
+				"blo",
+				"blockSize"
+			],
+			[
+				"cy",
+				"cypherTextBlocks"
+			],
+			[
+				"enc",
+				"encoded"
+			],
+			[
+				"pa",
+				"paddedStr"
+			],
+			[
+				"Py",
+				"PyCrypto"
+			],
+			[
+				"py",
+				"PyCrypto"
+			],
+			[
+				"X",
+				"xTest"
+			],
+			[
+				"c0",
+				"c0Arr"
+			],
+			[
+				"c1",
+				"c1Arr"
+			],
+			[
+				"c",
+				"cArray"
+			],
+			[
+				"m",
+				"methodcaller"
+			],
+			[
+				"enco",
+				"encoded1"
+			],
+			[
+				"P",
+				"Println	n int, err error ƒ"
+			],
+			[
+				"f",
+				"func main	func main {...} ʂ"
+			],
+			[
+				"im",
+				"import	import (...) ʂ"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"contents": "#!/bin/bash\n\n# README:\n# To load this script on the server:\n\n# apt-get install git\n# git config --global credential.helper 'cache --timeout=3000'\n# git clone https://github.com/TomLous/crawl-anywhere-demo.github\n\n\n# Global vars\nBASEDIR=$( cd \"$( dirname \"${BASH_SOURCE[0]}\" )\" && pwd )\n\nSOLR_BASE=\"/opt\"\nSOLR_LINK=\"$SOLR_BASE/solr\"\nSOLR_INSTALL=$SOLR_LINK # postfixed for installation \n\nCA_BASE=\"/opt\"\nCA_LINK=\"$CA_BASE/crawler\"\nCA_INSTALL=$CA_LINK # postfixed for installation \n\nETC_DIR=\"$SOLR_INSTALL/server/etc\"\nSSL_DIR=\"$SOLR_INSTALL/server/etc\"\n\nTODAY=$( date +%Y-%m-%d )\nMEMORY_FACTOR=0.70\nHEAPSIZE=$( cat /proc/meminfo  | grep MemTotal | awk -v mem=$MEMORY_FACTOR '{printf \"%1.0f\", ($2 * mem)/(1024)}')\n\n####################################################\n# Increase openfile limit\nroot soft nofile 16184\n\n# Check Timezone\nif [ $( cat /etc/timezone 2>&1 | grep -c \"Amsterdam\") -eq 0 ];then\n	dpkg-reconfigure tzdata\nfi\n\n# Create source/build dir\nif [ ! -d \"/root/build\" ]; then\n	mkdir /root/build\nfi\n\n# /sbin/false needed for install script\nif [ ! -e /sbin/false ]; then\n	ln -s /bin/false /sbin/false\nfi\n\n# Update APT cache\necho -e \"\\n>>> Update APT cache\"\nif [ $(expr $(date +%s) - $(stat -c %Y /var/cache/apt/)) -gt 3600 ];then \n	apt-get update\n	echo \"... ok\"\nelse\n	echo \"... Already done\"\nfi\n\n# Install tools\necho -e \"\\n>>> Installing Tools\"\nif [ $(dpkg-query -W -f='${Status}' sudo 2>/dev/null | grep -c \"ok installed\") -eq 0 ]; then\n	apt-get -y install sudo curl unzip wget gawk lrzsz\n	echo \"... ok\"\nelse\n	echo \"... Already done\"\nfi\n\n# Installing Python3 & pip\necho -e \"\\n>>> Installing Python3 & pip\"\nif [ $(dpkg-query -W -f='${Status}' python3 2>/dev/null | grep -c \"ok installed\") -eq 0 ]; then\n	apt-get -y install python3 python3-pip\n	echo \"... ok\"\nelse\n	echo \"... Already done\"\nfi\n\n# Install the Java JDK\necho -e \"\\n>>> Installing Java JDK 7\"\nif [ $(dpkg-query -W -f='${Status}' openjdk-7-jdk 2>/dev/null | grep -c \"ok installed\") -eq 0 ]; then\n	apt-get -y install openjdk-7-jdk\n	mkdir /usr/java\n	ln -s /usr/lib/jvm/java-7-openjdk-amd64 /usr/java/default\n	if [ $( cat ~/.bash_profile 2>&1 | grep -c \"JAVA_HOME\") -lt 1 ];then\n		export JAVA_HOME=\"/usr/java/default\"\n		echo -e \"\\nexport JAVA_HOME=\\\"/usr/java/default\\\"\" >> ~/.bash_profile\n		echo -e \"If you didn't soucre this, type:\\nexport JAVA_HOME=\\\"/usr/java/default\\\"\"			\n	fi\n\n	echo \"... ok\"\nelse\n	echo \"... Already done\"\nfi\n\n# Install Maven\necho -e \"\\n>>> Installing Maven\"\nif [ $(dpkg-query -W -f='${Status}' maven 2>/dev/null | grep -c \"ok installed\") -eq 0 ]; then\n	apt-get -y install maven	\n	echo \"... ok\"\nelse\n	echo \"... Already done\"\nfi\n\n# Installing Mongo \necho -e \"\\n>>> Installing Mongo DB\"\nif [ $(dpkg-query -W -f='${Status}' mongodb 2>/dev/null | grep -c \"ok installed\") -eq 0 ]; then\n	apt-get -y install mongodb\n	echo \"... ok\"\nelse\n	echo \"... Already done\"\nfi\n\n# Installing PHP 5\necho -e \"\\n>>> Installing Apache2 & PHP 5\"\nif [ $(dpkg-query -W -f='${Status}' php5 2>/dev/null | grep -c \"ok installed\") -eq 0 ]; then\n	apt-get -y install apache2 php5 apache2-utils php5-curl php5-gd php5-mysql php5-mongo php5-mcrypt php5-dev build-essentials\n	a2enmod rewrite\n	a2enmod vhost_alias\n	a2enmod ssl\n	echo \"... ok\"\nelse\n	echo \"... Already done\"\nfi\n\n\n# Installing Poppler \necho -e \"\\n>>> Installing Mongo DB\"\nif [ $(dpkg-query -W -f='${Status}' poppler-utils 2>/dev/null | grep -c \"ok installed\") -eq 0 ]; then\n	apt-get -y install poppler-utils\n	echo \"... ok\"\nelse\n	echo \"... Already done\"\nfi\n\n\n\n\n\n\n# ####################################################\n\n\necho -e \"\\n>>> Installing latest SOLR version\"\nif [ ! -e $SOLR_LINK ]; then\n	# Fetch SOLR version\n	solrVersion=`python $BASEDIR/utils/show-latest-solr-version.py`\n	echo -e \"\\n>> Fetching latest SOLR Version\"\n	echo $solrVersion\n	\n	SOLR_INSTALL=\"$SOLR_LINK-$solrVersion\"\n	\n	echo -e \"\\n>>> Creating SOLR user : solr\"\n	if [ $(id solr 2>&1 | grep -c \"No such user\") -eq 1 ];then\n		# Create Solr user\n		useradd -d $SOLR_LINK -s /bin/bash solr\n		echo \"... ok\"\n	else\n		echo \"... Already done\"\n	fi\n\n	# Start SOLR installation\n	echo -e \"\\n>> Start SOLR installation\"\n	cd /root/build\n	wget http://archive.apache.org/dist/lucene/solr/$solrVersion/solr-$solrVersion.tgz\n	tar -xf solr-$solrVersion.tgz\n	solr-$solrVersion/bin/install_solr_service.sh solr-$solrVersion.tgz -i $SOLR_BASE -d /var/solr -u solr -s solr -p 8983	\n	sudo -u solr mkdir $SOLR_INSTALL/lib\n	rm solr-$solrVersion.tgz	\n	\n	echo \"... ok\"\nelse\n	echo \"... Already done\"\nfi\n\n# ###################################################\n\n\n# echo -e \"\\n>>> Installing latest MySQL Connector/J\"\n# if [ $(ls -l $SOLR_INSTALL/lib  | grep -c mysql-connector-java) -eq 0 ]; then\n# 	# Fetch MySQL Connector/J version\n# 	mysqlConnectorJVersion=`python $BASEDIR/utils/show-latest-mysqlconnectorj-version.py`\n# 	echo -e \"\\n>> Fetching latest MySQL Connector/J Version\"\n# 	echo $mysqlConnectorJVersion\n	\n# 	# Start MySQL Connector/J installation\n# 	echo -e \"\\n>> Start MySQL Connector/J installation\"\n# 	cd /root/build\n# 	wget http://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-$mysqlConnectorJVersion.tar.gz\n# 	tar -xf mysql-connector-java-$mysqlConnectorJVersion.tar.gz\n# 	rm mysql-connector-java-$mysqlConnectorJVersion.tar.gz\n# 	cp mysql-connector-java-$mysqlConnectorJVersion/mysql-connector-java-$mysqlConnectorJVersion-bin.jar $SOLR_INSTALL/lib	\n# 	echo \"... ok\"\n# else\n# 	echo \"... Already done\"\n# fi\n\n\n# ####################################################\n\n# ### Security\n\n\n\n# ## Add SSL support\n# echo -e \"\\n>>> Add SSL support\"\n# ipAddress=$(ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\\.){3}[0-9]*).*/\\2/p')\n\n# # if [ ! -f \"$SSL_DIR/solr-ssl.keystore.jks\" ]; then\n# # 	echo \"\\nUse password = S0LRd4T4\"\n# # 	cd $SSL_DIR\n# # 	keytool -genkeypair -alias solr-ssl -keyalg RSA -keysize 2048 \\\n# # 		-keypass S0LRd4T4 -storepass S0LRd4T4 -validity 9999 -keystore solr-ssl.keystore.jks \\\n# # 		-ext SAN=DNS:localhost,DNS:solr-api.data-outlet.com,DNS:solr.data-outlet.com,DNS:www.data-outlet.com,DNS:test.data-outlet.com,DNS:office.datlinq.nl,DNS:spinel.tomenmarijke.nl,IP:$ipAddress,IP:127.0.0.1,IP:127.0.1.1 \\\n# # 		-dname \"CN=solr.data-outlet.com, OU=IT, O=Datlinq, L=Rotterdam, ST=ZH, C=NL\"\n# # 	keytool -importkeystore -srckeystore solr-ssl.keystore.jks -destkeystore solr-ssl.keystore.p12 -srcstoretype jks -deststoretype pkcs12\n# # 	openssl pkcs12 -in solr-ssl.keystore.p12 -out solr-ssl.pem\n# # 	openssl pkcs12 -nokeys -in solr-ssl.keystore.p12 -out solr-ssl.cacert.pem\n	\n# 	echo -e \"\\n>> Adding SOLR_SSL_OPTS to /var/solr/solr.in.sh\"\n# 	if [ $( cat /var/solr/solr.in.sh 2>&1 | grep -c \"SOLR_SSL_OPTS\") -eq 0 ];then\n# 		echo -e \"\\nSOLR_SSL_OPTS=\\\"\\$SOLR_SSL_OPTS -Djavax.net.ssl.keyStore=$SSL_DIR/solr-ssl.keystore.jks \\\n# 	   -Djavax.net.ssl.keyStorePassword=S0LRd4T4 \\\n# 	   -Djavax.net.ssl.trustStore=$SSL_DIR/solr-ssl.keystore.jks \\\n# 	   -Djavax.net.ssl.trustStorePassword=S0LRd4T4\\\"\" >> /var/solr/solr.in.sh\n# 		echo \"... ok\"\n# 	else\n# 		echo \"... Already done\"\n# 	fi\n\n  \n# #     chown solr:solr $SSL_DIR -R\n# # fi\n\necho -e \"\\n>> Changing HEAP to $HEAPSIZE\"\nif [ $( cat /var/solr/solr.in.sh 2>&1 | grep -c \"SOLR_HEAP=\\\"$HEAPSIZE\") -eq 0 ];then\n	echo -e \"\\nSOLR_HEAP=\\\"${HEAPSIZE}m\\\"\" >> /var/solr/solr.in.sh\n	echo \"... ok\"\nelse\n	echo \"... Already done\"\nfi\n\n\n\n\n# echo -e \"\\nSSL support is disabled in /var/solr/solr.in.sh, because I can't get it to work right now\"\n\n# ####################################################\n\n# Adjusting PATH\necho -e \"\\n>> Adjusting PATH\"\nif [ $( cat ~/.bash_profile 2>&1 | grep -c \"$SOLR_LINK\") -lt 1 ];then\n	export PATH=\"$PATH:$SOLR_LINK/bin\"\n	echo -e \"\\nexport PATH=\\\"\\$PATH:$SOLR_LINK/bin\\\"\" >> ~/.bash_profile\n	echo -e \"\\nexport PATH=\\\"\\$PATH:$SOLR_LINK/bin\\\"\" >> ~/.bashrc\n	echo -e \"If you didn't soucre this, type:\\nexport PATH=\\\"\\$PATH:$SOLR_LINK/bin\\\"\"\n	echo \"... ok\"\nelse\n	echo \"... Already done\"\nfi\n\n\n# Create logrotate script\necho -e \"\\n>> Create logrotate script\"\nif [ ! -f \"/etc/logrotate.d/solr\" ]; then\n	cp -f $BASEDIR/config-files/solr/logrotate /etc/logrotate.d/solr\n	echo \"... ok\"\nelse\n	echo \"... Already done\"\nfi\n\n\n# Copying .bash_profile for user solr\necho -e \"\\n>> Copying .bash_profile > .bashrc for user solr\"\ncp ~/.bash_profile /home/solr/.bash_profile\ncp ~/.bashrc /home/solr/.bashrc\nchown solr:solr /home/solr/.bash*\necho \"... ok\"\n\n\n\n# echo -e \"\\n>>> (re)Starting SOLR\"\n# /etc/init.d/solr restart\n\n",
+			"file": "install.sh",
+			"file_size": 7999,
+			"file_write_time": 130984707050000000,
+			"settings":
+			{
+				"buffer_size": 8365,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 347.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			],
+			[
+				"GoSublime: ",
+				"GoSublime: Activate 9o"
+			],
+			[
+				"GoSublime: ru",
+				"GoSublime: Run build command"
+			],
+			[
+				"new ",
+				"GoSublime: New Go File"
+			],
+			[
+				"Package Control: Install Package",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 449.0
+	},
+	"console":
+	{
+		"height": 254.0,
+		"history":
+		[
+			"go play",
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404' + 'e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)",
+			"?",
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404' + 'e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr/delta-import-template.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/install-solr-core-delta-import-cron.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/utils/api-server-sync-db.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/install-solr.sh",
+		"/Users/tomlous/Library/Application Support/Sublime Text 3/Packages/GoSublime/CHANGELOG.md",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/toggle-mode.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/update-datasource-hosts.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/update-config.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/install-solr-core-configset.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/install-solr-core.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/synonyms_nl.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/_install-api-server.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/install-newrelic.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/utils/delta-import.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/install-zookeeper.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/upgrade-server.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/_server_files/_core_schema.xml",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/install-network.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/generated/dataimport-config.xml",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/api/outlet_public_global.sql",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/_old/install-server.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr/logrotate",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/jetty/realm.properties",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/utils/generate-dataimport-properties.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/api-server-sync-db.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/utils/makedumpdwh.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/core-user.json",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/zookeeper/java.env",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/_server_files/conf/schema.xml",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/zookeeper/security.json",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/solrconfig.xml/schemaFactoryAfter.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/solrconfig.xml/header.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/solrconfig.xml/schemaFactoryBefore.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/_server_files/conf/solrconfig.xml",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/synonyms_it.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/synonyms_fr.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/synonyms_es.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/synonyms_en.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/synonyms_de.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/stopwords_pl.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/stopwords_nl.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/stopwords_it.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/stopwords_fr.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/stopwords_es.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/stopwords_en.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/stopwords_de.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/stemdict_nl.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/contractions_it.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/contractions_fr.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/synonyms_pl.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/network/interfaces_eth1",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/generated/schema.xml",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/zookeeper/zoo.cfg",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/zookeeper/zookeeper",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/_server_files/conf/spellings.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/synonyms_nl.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/_server_files/conf/synonyms.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang/it.txt",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/_server_files/_core_solrconfig.xml",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/utils/show-latest-zookeeper-version.py",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/utils/show-latest-mysqlconnectorj-version.py",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/utils/show-latest-solr-version.py",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/zoo.cfg",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/java.env",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/schema.xml",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/install-server.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/jetty/var_solr_solr.in.sh",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/jetty/solr-jetty-8-start.ini",
+		"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/solrconfig.xml/libs.txt",
+		"/Users/tomlous/Documents/Datlinq/dataoutlet-solr/install-server.sh",
+		"/Users/tomlous/Development/Scala/doodle/build.sbt",
+		"/Users/tomlous/Development/Scala/doodle/doodle.sublime-project",
+		"/Users/tomlous/Development/ApacheNutch/nutch-cce-crawler/utils/remove-server.sh",
+		"/Users/tomlous/Documents/coursera/crypto/coursera-cryptography1/week2-problemset/programming_assignment.py",
+		"/Users/tomlous/Documents/coursera/crypto/coursera-cryptography1/week4-problemset/question1.py",
+		"/Users/tomlous/Documents/coursera/crypto/coursera-cryptography1/week4-problemset/programming_assignment.py",
+		"/Users/tomlous/Documents/coursera/crypto/coursera-cryptography1/week2-problemset/question4.py",
+		"/Users/tomlous/Documents/coursera/crypto/coursera-cryptography1/week3-problemset/programming_assignment.py",
+		"/Users/tomlous/Development/PHPStorm/snippets/jsontocsv/sirah2015/parts/source_2_10.json",
+		"/Users/tomlous/Development/PHPStorm/snippets/jsontocsv/sirah2015/source.json",
+		"/Users/tomlous/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/tomlous/Development/PHPStorm/snippets/jsontocsv/sirah2015/parts/source_2_2.json",
+		"/Users/tomlous/Documents/coursera/crypto/coursera-cryptography1/week3-problemset/question9.py",
+		"/Users/tomlous/Documents/coursera/crypto/coursera-cryptography1/week3-problemset/question8.py",
+		"/Users/tomlous/Documents/coursera/crypto/coursera-cryptography1/week1-problemset/programming_assignment.py",
+		"/Users/tomlous/Development/PHPStorm/snippets/jsontocsv/sirah2015/parts/source_2_7.json",
+		"/Users/tomlous/Documents/coursera/aiplan/week1/cannibals-missionaries.pl",
+		"/Users/tomlous/Documents/coursera/aiplan/week1/cannibals-missionaries.php",
+		"/Users/tomlous/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/Users/tomlous/Library/Application Support/Sublime Text 3/Packages/Package Control/Package Control.sublime-settings",
+		"/Users/tomlous/Library/Application Support/Sublime Text 3/Packages/User/Package Control.sublime-settings",
+		"/Users/tomlous/Documents/coursera/crypto/coursera-cryptography1/week2-problemset/question5.py",
+		"/Users/tomlous/Documents/coursera/crypto/coursera-cryptography1/week2-problemset/question2.py",
+		"/Users/tomlous/Documents/coursera/crypto/coursera-cryptography1/week2-problemset/question9.py",
+		"/Users/tomlous/Documents/coursera/crypto/coursera-cryptography1/week2-problemset/question1.py",
+		"/Users/tomlous/Library/Application Support/Sublime Text 3/Packages/GoSublime/USAGE.md",
+		"/Users/tomlous/Documents/coursera/pythonlearn/coursera-pythonlearn/homework/week1-installation.py",
+		"/Users/tomlous/Documents/Datlinq/dataoutlet-solr/utils/show-latest-mysqlconnectorj-version.py",
+		"/Users/tomlous/Documents/coursera/crypto/coursera-cryptography1/week1-problemset/question7.py",
+		"/Users/tomlous/Documents/coursera/progfun/coursera-functional-programming-principles-in-scala-bak/example/src/main/scala/example/Lists.scala",
+		"/Users/tomlous/Downloads/php2py/php2py.el",
+		"/Users/tomlous/Downloads/vuvakken.html",
+		"/Users/tomlous/Development/Sublime/GoTest/main.go",
+		"/Applications/CrashPlan.app/Contents/Resources/Java/conf/ui.properties",
+		"/Users/tomlous/Documents/coursera/progfun/coursera-functional-programming-principles-in-scala/recfun/.project",
+		"/Volumes/C/Users/tomlous/Games/Civilization V/Assets/Gameplay/Lua/AssignStartingPlots.lua",
+		"/Volumes/Klanten/Intern/Product Development/Potentiemodel/Potentiemodel 20140919/Potentiemodel/RunPotenshell.bat",
+		"/Users/tomlous/Downloads/Coursera-Machine-Learning-master/ex5/polyFeatures.m",
+		"/Volumes/Klanten/Intern/Product Development/Potentiemodel/Potentiemodel 20140919/Potentiemodel/RunPotenshell - Kronenbourg FR.bat",
+		"/Users/tomlous/Downloads/example/.classpath",
+		"/Users/tomlous/Library/Application Support/Sublime Text 3/Packages/User/GoSublime/osx-x64/log.txt",
+		"/Users/tomlous/Development/Sublime/GoTest/hello.go"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 93.0,
+		"where_history":
+		[
+			"/Users/tomlous/Development/Solr/dataoutlet-solr/",
+			"/Users/tomlous/Development/Solr/dataoutlet-solr/config-files/solr-core/lang",
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"solr-core",
+			"sorl-core",
+			"sorl-c",
+			"location_",
+			"core",
+			"CRON_SCRIPT",
+			"CONF_DIR",
+			"LICENCE_KEY",
+			"TYPE=",
+			"sed",
+			"initParams",
+			"param",
+			"SOLR_CONFIG_SET_DIR",
+			"updateRequestProcessorChain",
+			"files",
+			"config-file",
+			"CORE_",
+			"CORE_CONF_DIR",
+			"CORE_NAME",
+			",  ",
+			" , ",
+			" en ",
+			" of ",
+			"sind",
+			"bash_profile",
+			"{\n	   			\"name\":\"security-edit\", \n	   			\"role\":\"adminRole\"\n	   		},",
+			"\"\",\n",
+			"”",
+			"sed",
+			"solr-cloud-",
+			"SOLR",
+			"solr",
+			"sh",
+			"HOSTNAME_TEMPLATE",
+			"HOSTS_TEMPLATE",
+			"print",
+			"SERVERID",
+			"BASEDIR",
+			"grep",
+			"=\\\"\\$",
+			"sol",
+			"\"\n",
+			"ZOOKEEPER_VAR",
+			"sed",
+			"echo",
+			"BASEDIR",
+			"sudo",
+			"CORE_DIR",
+			"Solr",
+			"build",
+			"gz",
+			"SOLR",
+			"solr",
+			"found",
+			"etc",
+			"qualit",
+			"00",
+			"path",
+			"∥∥",
+			"–",
+			"y2",
+			"y1",
+			"f1",
+			"x2",
+			"x1",
+			"python",
+			"XOR",
+			" \n",
+			"⨁",
+			"re",
+			" \"",
+			"paddedStr",
+			"decrypt",
+			"cypher",
+			"intToBinStr",
+			"hexStrToInt",
+			"+ ",
+			"encrypt",
+			"⨁",
+			"],",
+			",\"",
+			",",
+			"0x",
+			"\"]",
+			"\",",
+			",\"",
+			"[\"",
+			"1",
+			"w",
+			" \")",
+			"print",
+			"hex",
+			"maxProcs",
+			"runtime"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"LICENCEKEY",
+			"ENGINE=",
+			", ",
+			"\"",
+			"ZOOKEEPER",
+			"zookeeper",
+			"ZOOKEEPERVARDIR",
+			"Nutch",
+			"NUTCH",
+			"nutch",
+			"",
+			"||",
+			"-",
+			"y4",
+			"y3",
+			"f2",
+			"x4",
+			"x3",
+			"x2",
+			"xor",
+			" xor ",
+			"\"],",
+			"\",\"",
+			"\",",
+			"\"",
+			"]",
+			",",
+			",0x",
+			"0x"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "install.sh",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 8365,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3691,
+								3691
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/ShellScript/Shell-Unix-Generic.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1666.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.GoSublime-main-output":
+	{
+		"height": 100.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "crawl-anywhere-demo.sublime-project",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 384.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

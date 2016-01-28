@@ -1,0 +1,41 @@
+ <!-- Select access to the core -->
+ <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>Solr query</web-resource-name>
+      <url-pattern>/[CORE_NAME]/select</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>admin</role-name>
+      <role-name>search</role-name>
+      <role-name>maintenance</role-name>
+    </auth-constraint>
+  </security-constraint>
+  
+  <!-- Complete access to the core -->
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>Solr core</web-resource-name>
+      <url-pattern>/[CORE_NAME]/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>admin</role-name>
+      <role-name>maintenance</role-name>
+    </auth-constraint>
+  </security-constraint>
+  
+  <!-- Admin access -->
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>Solr admin</web-resource-name>
+      <url-pattern>/admin/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>admin</role-name>
+    </auth-constraint>
+  </security-constraint>
+  
+  <login-config>
+    <auth-method>BASIC</auth-method>
+    <realm-name>SOLR Realm</realm-name>
+  </login-config>
+  

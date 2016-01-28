@@ -1,0 +1,13 @@
+/var/solr/logs/solr-8983-console.log {
+    rotate 1
+    daily
+    missingok
+    notifempty
+    sharedscripts
+    copytruncate
+    compress
+    lastaction
+        find /var/solr/logs/solr_log_* -mtime +2 -delete
+        find /var/solr/logs/solr_gc_log_* -mtime +2 -delete
+    endscript
+}
