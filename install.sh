@@ -114,7 +114,7 @@ echo -e "\n>>> Installing Apache2 & PHP 5"
 if [ $(dpkg-query -W -f='${Status}' php5 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
 	apt-get -y install apache2 php5 apache2-utils php5-curl php5-gd php5-mysql php5-mongo php5-mcrypt php5-dev
 	a2enmod rewrite
-	a2enmod vhost_alias
+		
 	a2enmod ssl
 	echo "... ok"
 else
@@ -204,7 +204,8 @@ if [ ! -e $CA_LINK ]; then
 	ln -s $CA_INSTALL $CA_LINK
 	cp *.tar.gz $CA_INSTALL
 	cd $CA_INSTALL
-	tar -xf *.tar.gz
+	for i in *.tar.gz; do tar -xf $i; done
+	#tar -xf *.tar.gz
 	rm *.tar.gz
 
 	mkdir log queue queue_solr tmp
@@ -231,6 +232,15 @@ if [ ! -e $CA_LINK ]; then
 else
 	echo "... Already done"
 fi
+
+
+# cd /etc
+# cp mongodb.conf mongodb.org.conf
+# mkdir /opt/mongodb-data
+# chmod 777 /opt/mongodb-data
+
+
+
 
 # echo -e "\n>>> Installing latest MySQL Connector/J"
 # if [ $(ls -l $SOLR_INSTALL/lib  | grep -c mysql-connector-java) -eq 0 ]; then
