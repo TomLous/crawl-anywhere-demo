@@ -16,8 +16,8 @@ SOLR_LINK="$SOLR_BASE/solr"
 SOLR_INSTALL=$SOLR_LINK # postfixed for installation 
 
 CA_BASE="/opt"
-CA_LINK="$SOLR_BASE/solr"
-CA_INSTALL=$SOLR_LINK # postfixed for installation 
+CA_LINK="$SOLR_BASE/crawler"
+CA_INSTALL=$CA_LINK # postfixed for installation 
 
 
 ETC_DIR="$SOLR_INSTALL/server/etc"
@@ -175,13 +175,18 @@ fi
 echo -e "\n>>> Installing crawler"
 if [ ! -e $CA_LINK ]; then
 	# Fetch SOLR version
+	echo -e "\n>>> **build from github : https://github.com/bejean/crawl-anywhere ***"
+	# git clone https://github.com/bejean/crawl-anywhere.git
+	# edit build.sh
+	# ./build.sh > build.log
+
 	# solrVersion=`python $BASEDIR/utils/show-latest-solr-version.py`
 	# echo -e "\n>> Fetching latest SOLR Version"
 	# echo $solrVersion
 
 	caVersion="4.0.0"
 	
-	CA_INSTALL="$SOLR_LINK-$solrVersion"
+	CA_INSTALL="$CA_LINK-$caVersion"
 	
 	echo -e "\n>>> Creating Crawler user : crawler"
 	if [ $(id crawler 2>&1 | grep -c "No such user") -eq 1 ];then
@@ -192,10 +197,25 @@ if [ ! -e $CA_LINK ]; then
 		echo "... Already done"
 	fi
 
-	# # Start SOLR installation
-	# echo -e "\n>> Start SOLR installation"
-	# cd /root/build
-	# wget http://archive.apache.org/dist/lucene/solr/$solrVersion/solr-$solrVersion.tgz
+	# Start Crawler installation
+	echo -e "\n>> Start Crawler installation"
+	cd /root/build/crawlanywere/$caVersion
+	mkdir $CA_INSTALL
+	ln -s $CA_INSTALL $CA_LINK
+	cp *.tar.gz $CA_INSTALL
+	cd $CA_INSTALL
+	tar -xf *.tar.gz
+	rm *.tar.gz
+
+	mkdir log queue queue_solr tmp
+	chmod go+rw log queue queue_solr tmp
+
+	cd scripts
+	cp -r linux/* .
+	chmod +x *
+
+	#/root/build/crawlanywere/4.0.0
+	#wget http://archive.apache.org/dist/lucene/solr/$solrVersion/solr-$solrVersion.tgz
 	# tar -xf solr-$solrVersion.tgz
 	# solr-$solrVersion/bin/install_solr_service.sh solr-$solrVersion.tgz -i $SOLR_BASE -d /var/solr -u solr -s solr -p 8983	
 	# sudo -u solr mkdir $SOLR_INSTALL/lib
