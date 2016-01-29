@@ -15,6 +15,11 @@ SOLR_BASE="/opt"
 SOLR_LINK="$SOLR_BASE/solr"
 SOLR_INSTALL=$SOLR_LINK # postfixed for installation 
 
+CA_BASE="/opt"
+CA_LINK="$SOLR_BASE/solr"
+CA_INSTALL=$SOLR_LINK # postfixed for installation 
+
+
 ETC_DIR="$SOLR_INSTALL/server/etc"
 SSL_DIR="$SOLR_INSTALL/server/etc"
 
@@ -53,11 +58,12 @@ fi
 # Install tools
 echo -e "\n>>> Installing Tools"
 if [ $(dpkg-query -W -f='${Status}' sudo 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
-	apt-get -y install sudo curl unzip wget gawk lrzsz
+	apt-get -y install sudo curl unzip wget gawk lrzsz build-essentials
 	echo "... ok"
 else
 	echo "... Already done"
 fi
+
 
 # Installing Python3 & pip
 echo -e "\n>>> Installing Python3 & pip"
@@ -67,28 +73,6 @@ if [ $(dpkg-query -W -f='${Status}' python3 2>/dev/null | grep -c "ok installed"
 else
 	echo "... Already done"
 fi
-
-# Installing PHP 5
-echo -e "\n>>> Installing Apache2 & PHP 5"
-if [ $(dpkg-query -W -f='${Status}' php5 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
-	apt-get -y install apache2 php5 apache2-utils php5-curl php5-gd php5-mysql php5-mongo php-mcrypt
-	a2enmod rewrite
-	a2enmod vhost_alias
-	a2enmod ssl
-	echo "... ok"
-else
-	echo "... Already done"
-fi
-
-# Installing Mongo 
-echo -e "\n>>> Installing Mongo DB"
-if [ $(dpkg-query -W -f='${Status}' mongodb 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
-	apt-get -y install mongodb
-	echo "... ok"
-else
-	echo "... Already done"
-fi
-
 
 # Install the Java JDK
 echo -e "\n>>> Installing Java JDK 7"
@@ -115,6 +99,38 @@ if [ $(dpkg-query -W -f='${Status}' maven 2>/dev/null | grep -c "ok installed") 
 else
 	echo "... Already done"
 fi
+
+# Installing Mongo 
+echo -e "\n>>> Installing Mongo DB"
+if [ $(dpkg-query -W -f='${Status}' mongodb 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
+	apt-get -y install mongodb
+	echo "... ok"
+else
+	echo "... Already done"
+fi
+
+# Installing PHP 5
+echo -e "\n>>> Installing Apache2 & PHP 5"
+if [ $(dpkg-query -W -f='${Status}' php5 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
+	apt-get -y install apache2 php5 apache2-utils php5-curl php5-gd php5-mysql php5-mongo php5-mcrypt php5-dev
+	a2enmod rewrite
+	a2enmod vhost_alias
+	a2enmod ssl
+	echo "... ok"
+else
+	echo "... Already done"
+fi
+
+
+# Install utils
+echo -e "\n>>> Installing utils"
+if [ $(dpkg-query -W -f='${Status}' poppler-utils 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
+	apt-get -y install poppler-utils
+	echo "... ok"
+else
+	echo "... Already done"
+fi
+
 
 
 
@@ -155,6 +171,46 @@ fi
 
 # ###################################################
 
+
+echo -e "\n>>> Installing crawler"
+if [ ! -e $CA_LINK ]; then
+	# Fetch SOLR version
+	# solrVersion=`python $BASEDIR/utils/show-latest-solr-version.py`
+	# echo -e "\n>> Fetching latest SOLR Version"
+	# echo $solrVersion
+
+	caVersion="4.0.0"
+	
+	CA_INSTALL="$SOLR_LINK-$solrVersion"
+	
+	echo -e "\n>>> Creating Crawler user : crawler"
+	if [ $(id crawler 2>&1 | grep -c "No such user") -eq 1 ];then
+		# Create Solr user
+		useradd -d $CA_LINK -s /bin/bash crawler
+		echo "... ok"
+	else
+		echo "... Already done"
+	fi
+
+	# # Start SOLR installation
+	# echo -e "\n>> Start SOLR installation"
+	# cd /root/build
+	# wget http://archive.apache.org/dist/lucene/solr/$solrVersion/solr-$solrVersion.tgz
+	# tar -xf solr-$solrVersion.tgz
+	# solr-$solrVersion/bin/install_solr_service.sh solr-$solrVersion.tgz -i $SOLR_BASE -d /var/solr -u solr -s solr -p 8983	
+	# sudo -u solr mkdir $SOLR_INSTALL/lib
+	# rm solr-$solrVersion.tgz	
+	# sudo -u solr $SOLR_INSTALL/bin/solr create -c $CORE_NAME
+	
+	# # 5.0.0 bug
+	# touch $CORE_CONF_DIR/dataimport.properties
+	# touch $CORE_CONF_DIR/admin-extra.html
+	# touch $CORE_CONF_DIR/admin-extra.menu-top.html
+	# touch $CORE_CONF_DIR/admin-extra.menu-bottom.html
+	echo "... ok"
+else
+	echo "... Already done"
+fi
 
 # echo -e "\n>>> Installing latest MySQL Connector/J"
 # if [ $(ls -l $SOLR_INSTALL/lib  | grep -c mysql-connector-java) -eq 0 ]; then
@@ -255,6 +311,13 @@ echo -e "\n>> Copying .bash_profile > .bashrc for user solr"
 cp ~/.bash_profile /home/solr/.bash_profile
 cp ~/.bashrc /home/solr/.bashrc
 chown solr:solr /home/solr/.bash*
+echo "... ok"
+
+# Copying .bash_profile for user crawler
+echo -e "\n>> Copying .bash_profile > .bashrc for user crawler"
+cp ~/.bash_profile /home/crawler/.bash_profile
+cp ~/.bashrc /home/crawler/.bashrc
+chown crawler:crawler /home/crawler/.bash*
 echo "... ok"
 
 
